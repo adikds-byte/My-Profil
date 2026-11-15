@@ -748,6 +748,7 @@ body.ssOpen .scanline{opacity:.07}
     <div class="hudChip time" id="hudTime"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/></svg><b>--:--:--</b></div>
   </div>
   <button id="secChip" title="Cyber Guard HUD - status proteksi konten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4.5 6v6c0 4.6 3.2 8.3 7.5 9.5 4.3-1.2 7.5-4.9 7.5-9.5V6L12 3Z"/><path d="m9 12 2 2 4-4.5"/></svg><span class="lbl">Proteksi</span><span class="n" id="secChipN">0</span></button>
+  <button class="fsBtn" id="fsBtn" title="Tampilkan layar penuh" aria-label="Tampilkan layar penuh" aria-pressed="false"><svg class="icMax" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/></svg><svg class="icMin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v4a2 2 0 0 1-2 2H3M15 3v4a2 2 0 0 0 2 2h4M21 15h-4a2 2 0 0 0-2 2v4M3 15h4a2 2 0 0 1 2 2v4"/></svg></button>
   <button class="btnTop" id="topAsk">Tanya AI</button>
 </header>
 
@@ -1078,6 +1079,8 @@ body.ssOpen .scanline{opacity:.07}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg><span class="lbl">Suara Siri</span></button>
     <button class="dk" id="dkGuard" title="Cyber Guard HUD - proteksi konten">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4.5 6v6c0 4.6 3.2 8.3 7.5 9.5 4.3-1.2 7.5-4.9 7.5-9.5V6L12 3Z"/><path d="m9 12 2 2 4-4.5"/></svg><span class="lbl">Cyber Guard</span></button>
+    <button class="dk" id="dkFs" title="Tampilkan layar penuh">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/></svg><span class="lbl">Layar Penuh</span></button>
   </div>
   <button class="dkMain" id="dkMain" aria-label="Kontrol tampilan" title="Kontrol: screensaver, doa, suara SIRI">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2 2 2 0 1 1-4 0 1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a2 2 0 1 1 0-4 1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 11.5 4a2 2 0 1 1 4 0 1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 19.4 11a2 2 0 1 1 0 4Z"/></svg>
@@ -3363,6 +3366,153 @@ img, video, canvas{ -webkit-user-drag:none; user-drag:none }
   } else {
     init();
   }
+})();
+
+</script>
+
+<!-- ============ V13.1 · LAYAR PENUH ============ -->
+<style id="v131css">
+/* ============================================================
+   V13.1 · TOMBOL LAYAR PENUH (fullscreen)
+   ============================================================ */
+.fsBtn{flex:0 0 auto;display:inline-grid;place-items:center;width:36px;height:36px;border-radius:11px;cursor:pointer;
+  border:1px solid rgba(120,190,255,.28);background:linear-gradient(150deg,rgba(11,20,36,.92),rgba(7,13,24,.96));
+  color:#cfe6ff;transition:.25s;box-shadow:0 10px 26px -20px rgba(56,232,255,.9);position:relative}
+.fsBtn svg{width:15px;height:15px}
+.fsBtn:hover{transform:translateY(-2px);border-color:rgba(56,232,255,.75);color:#eafcff;
+  box-shadow:0 16px 38px -22px rgba(56,232,255,.95)}
+.fsBtn:active{transform:translateY(0) scale(.96)}
+.fsBtn .icMin{display:none}
+body.isFull .fsBtn{border-color:rgba(56,232,255,.7);color:#9fe9ff;background:linear-gradient(150deg,rgba(56,232,255,.2),rgba(139,92,246,.24))}
+body.isFull .fsBtn .icMax{display:none}
+body.isFull .fsBtn .icMin{display:block}
+@media (max-width:640px){.fsBtn{width:32px;height:32px;border-radius:10px}.fsBtn svg{width:14px;height:14px}}
+@media (max-width:380px){#top{gap:9px}.fsBtn{width:30px;height:30px}}
+
+/* saat layar penuh: rapatkan tepi agar konten lebih lega */
+:fullscreen #top, :-webkit-full-screen #top{padding-top:10px}
+:fullscreen body, html:fullscreen{background:#04050a}
+html:fullscreen, html:-webkit-full-screen{overscroll-behavior:none}
+
+/* di layar sempit: sisakan ruang untuk tombol layar penuh */
+@media (max-width:430px){#hudDay{display:none!important}}
+@media (max-width:340px){#hudTime{display:none!important}}
+/* chip HUD diberi prioritas agar jam tidak terpotong */
+.hud{flex-shrink:0}
+.brand .t{overflow:hidden}
+.brand .t b,.brand .t span{overflow:hidden;text-overflow:ellipsis;max-width:100%}
+@media (max-width:1279px){#hudHijri{display:none!important}}
+@media (max-width:430px){
+  .hudChip{padding:6px 7px;gap:5px;font-size:10px}
+  .hudChip svg{width:10px;height:10px}
+  .hudChip.time b{font-size:10.5px;letter-spacing:0}
+}
+
+</style>
+<script id="v131js">
+/* ============================================================
+   V13.1 · LAYAR PENUH — tombol ikon di top bar + menu dock
+   ============================================================ */
+(function(){
+  'use strict';
+  var $ = function(s, r){ return (r || document).querySelector(s); };
+
+  function fsElement(){
+    return document.fullscreenElement || document.webkitFullscreenElement ||
+           document.msFullscreenElement || null;
+  }
+  function supported(){
+    var el = document.documentElement;
+    return !!(document.fullscreenEnabled || document.webkitFullscreenEnabled ||
+              document.msFullscreenEnabled ||
+              el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen);
+  }
+  function isIOS(){
+    return /iP(hone|ad|od)/.test(navigator.platform || '') ||
+           (navigator.userAgent.indexOf('Mac') > -1 && 'ontouchend' in document);
+  }
+
+  function sync(){
+    var on = !!fsElement();
+    document.body.classList.toggle('isFull', on);
+    var b = $('#fsBtn');
+    if (b){
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.title = on ? 'Keluar dari layar penuh (Esc)' : 'Tampilkan layar penuh';
+      b.setAttribute('aria-label', b.title);
+    }
+    var d = $('#dkFs');
+    if (d){
+      d.title = on ? 'Keluar dari layar penuh' : 'Tampilkan layar penuh';
+      var lbl = d.querySelector('.lbl');
+      if (lbl) lbl.textContent = on ? 'Keluar Penuh' : 'Layar Penuh';
+      d.classList.toggle('on', on);
+    }
+  }
+
+  function enter(){
+    var el = document.documentElement;
+    var fn = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+    if (!fn){
+      if (window.toast) toast(isIOS() ? 'Di iPhone/iPad: bagikan > Tambah ke Layar Utama untuk mode penuh.' : 'Browser ini belum mendukung layar penuh.');
+      return;
+    }
+    try {
+      var p = fn.call(el, { navigationUI: 'hide' });
+      if (p && p.catch) p.catch(function(){
+        try { el.webkitRequestFullscreen && el.webkitRequestFullscreen(); } catch (e){}
+      });
+    } catch (err){
+      if (window.toast) toast('Layar penuh tidak dapat diaktifkan di browser ini.');
+    }
+  }
+
+  function exit(){
+    var fn = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+    if (!fn || !fsElement()) return;
+    try {
+      var p = fn.call(document);
+      if (p && p.catch) p.catch(function(){});
+    } catch (err){}
+  }
+
+  function toggle(){
+    if (fsElement()) exit(); else enter();
+  }
+  window.fsToggle = toggle;
+
+  function wire(){
+    var b = $('#fsBtn');
+    if (b) b.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); toggle(); });
+    var d = $('#dkFs');
+    if (d) d.addEventListener('click', function(e){
+      e.preventDefault();
+      var dock = document.getElementById('dock');
+      if (dock) dock.classList.remove('open');
+      toggle();
+    });
+
+    ['fullscreenchange', 'webkitfullscreenchange', 'msfullscreenchange'].forEach(function(ev){
+      document.addEventListener(ev, function(){
+        sync();
+        window.dispatchEvent(new Event('resize'));
+      });
+    });
+
+    document.addEventListener('keydown', function(e){
+      if (e.key !== 'Escape') return;
+      if (fsElement() && !document.getElementById('guardOv').classList.contains('on')) exit();
+    });
+
+    if (!supported() && isIOS()){
+      var b2 = $('#fsBtn');
+      if (b2) b2.title = 'Layar penuh: di iPhone gunakan Tambah ke Layar Utama';
+    }
+    sync();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire);
+  else wire();
 })();
 
 </script>
