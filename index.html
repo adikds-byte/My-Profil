@@ -1082,14 +1082,10 @@ body.ssOpen .scanline{opacity:.07}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4.5 6v6c0 4.6 3.2 8.3 7.5 9.5 4.3-1.2 7.5-4.9 7.5-9.5V6L12 3Z"/><path d="m9 12 2 2 4-4.5"/></svg><span class="lbl">Cyber Guard</span></button>
         <button class="dk" id="dkGal" title="Galeri foto pribadi">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="13" rx="2.2"/><path d="M7 3.4h11A2.6 2.6 0 0 1 20.6 6v11"/><circle cx="8.4" cy="11" r="1.1"/><path d="M3.4 17.2l3.9-3.6 3.4 3.2 2.4-2.1 3 2.8"/></svg><span class="lbl">Galeri</span></button>
-    <button class="dk" id="dkMetrik" aria-pressed="true" title="Animasi metrik live">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17V9M8 17V5M13 17v-6M18 17V7"/></svg><span class="lbl">Metrik ON</span><i class="qState" aria-hidden="true"></i></button>
     <button class="dk" id="dkFs" title="Tampilkan layar penuh">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/></svg><span class="lbl">Layar Penuh</span></button>
   </div>
-    <button class="dk" id="dkQuantum" type="button" aria-pressed="true" title="Animasi Quantum Partikel: AKTIF · klik untuk mematikan">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.1" fill="currentColor" stroke="none"/><ellipse cx="12" cy="12" rx="10" ry="4.4"/><ellipse cx="12" cy="12" rx="10" ry="4.4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4.4" transform="rotate(-60 12 12)"/></svg><span class="lbl">Quantum ON</span><i class="qState" aria-hidden="true"></i></button>
-  <button class="dkMain" id="dkMain" aria-label="Kontrol tampilan" title="Kontrol: screensaver, doa, suara SIRI">
+  <button class="dkMain" id="dkMain" aria-label="Kontrol tampilan" title="Kontrol: screensaver, doa, suara SIRI, cyber guard, galeri">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2 2 2 0 1 1-4 0 1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a2 2 0 1 1 0-4 1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 11.5 4a2 2 0 1 1 4 0 1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 19.4 11a2 2 0 1 1 0 4Z"/></svg>
   </button>
 </div>
@@ -1733,6 +1729,7 @@ function createGlobe(host, opt){
 
   const camera = new THREE.PerspectiveCamera(38, W / H, 0.1, 400);
   camera.position.set(0, 0, cfg.distance);
+  let zoomK = 1;   /* faktor zoom bumi (V19) */
 
   let renderer;
   try{
@@ -1901,12 +1898,13 @@ function createGlobe(host, opt){
     const wide = aspect >= 1.05;
     if (wide){
       world.position.set(cfg.offsetX, cfg.offsetY, 0);
-      camera.position.z = cfg.distance;
+      camera.position.z = cfg.distance / zoomK;
     } else {
       // layar tegak: bumi ditengahkan dan ditarik lebih jauh agar utuh
       world.position.set(0, cfg.offsetY - .06, 0);
-      camera.position.z = cfg.distance * (1.05 / Math.max(.42, Math.min(1, aspect)) * .62);
-      camera.position.z = Math.max(cfg.distance * 1.15, Math.min(cfg.distance * 1.95, camera.position.z));
+      let baseZ = cfg.distance * (1.05 / Math.max(.42, Math.min(1, aspect)) * .62);
+      baseZ = Math.max(cfg.distance * 1.15, Math.min(cfg.distance * 1.95, baseZ));
+      camera.position.z = baseZ / zoomK;
     }
     camera.aspect = aspect;
     camera.updateProjectionMatrix();
@@ -1954,10 +1952,18 @@ function createGlobe(host, opt){
   }
   frame();
 
+  function setZoom(k){
+    zoomK = Math.max(0.6, Math.min(2.9, k));
+    composition();
+    return zoomK;
+  }
+
   return {
     ready: texturesReady,
     resize,
-    scene, earth, globe, orbits,
+    scene, earth, globe, orbits, camera,
+    setZoom,
+    getZoom: function(){ return zoomK; },
     dispose(){
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', resize);
@@ -2046,6 +2052,7 @@ setTimeout(() => { if (!done) enterSite(); }, 22000);
       satellites: 3, stars: 1500, autoSpin: .032, thin: false
     });
   }catch(e){}
+  try{ if (bgGlobe) window.mxEarth = bgGlobe; }catch(e){}
 
   setPct(96, 4);
   await new Promise(r => setTimeout(r, 240));
@@ -2860,7 +2867,7 @@ img, video, canvas{ -webkit-user-drag:none; user-drag:none }
         <span class="gBr tl"></span><span class="gBr tr"></span><span class="gBr bl"></span><span class="gBr br"></span>
         <div class="gTag tl">Node MH-01 &middot; Guard online</div>
         <div class="gTag tr">Anti-copy &middot; Anti-devtools</div>
-        <div class="gTag bl">Walker + atom orbit &middot; v16middot; v18</div>
+        <div class="gTag bl">Walker + atom orbit &middot; v19</div>
       </section>
 
       <!-- panel status -->
@@ -3524,11 +3531,11 @@ html:fullscreen, html:-webkit-full-screen{overscroll-behavior:none}
 
 </script>
 
-<!-- ============ V16 · GALERI FOTO ============ -->
+<!-- ============ V16-V19 · GALERI FOTO ============ -->
 <div id="galOv" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Galeri foto">
   <div class="galWrap">
     <div class="galHead">
-      <div class="ghT"><b>Galeri Foto</b><span>Koleksi pribadi &middot; <b id="galN">11</b> foto</span></div>
+      <div class="ghT"><b>Galeri Foto</b><span>Koleksi pribadi &middot; <b id="galN">31</b> foto</span></div>
       <button class="galX" id="galClose" aria-label="Tutup galeri">&#10005;</button>
     </div>
     <div class="galGrid" id="galGrid"></div>
@@ -3543,29 +3550,17 @@ html:fullscreen, html:-webkit-full-screen{overscroll-behavior:none}
   </div>
 </div>
 
-<!-- ============ V16 · PANEL METRIK LIVE ============ -->
-<div id="metrik" aria-label="Metrik live">
-  <div class="metHead">
-    <i class="metDot"></i><b>Metrik Live</b>
-    <button class="metBtn" id="metBtn" type="button" aria-pressed="true" title="Metrik live: AKTIF">ON</button>
-    <button class="metMin" id="metMin" type="button" aria-label="Kecilkan panel metrik">&ndash;</button>
-  </div>
-  <div class="metBody">
-    <canvas id="metSpark" width="240" height="46"></canvas>
-    <div class="metGrid">
-      <div class="metCell c"><b id="mtFps">--</b><span>FPS</span></div>
-      <div class="metCell"><b id="mtPar">--</b><span>Partikel</span></div>
-      <div class="metCell g"><b id="mtMem">--</b><span>Memori</span></div>
-      <div class="metCell c"><b id="mtLat">--</b><span>Latensi</span></div>
-      <div class="metCell l"><b id="mtEnt">--</b><span>Entropi</span></div>
-      <div class="metCell"><b id="mtUp">--</b><span>Uptime</span></div>
-    </div>
-    <div class="metBar"><span>Beban</span><i><b id="mtLoad"></b></i></div>
-    <div class="metBar int"><span>Integritas</span><i><b id="mtInt"></b></i></div>
-  </div>
+<!-- ============ V19 · KONTROL ZOOM BUMI 3D ============ -->
+<div id="earthZoom" role="group" aria-label="Zoom bumi 3D">
+  <button id="ezIn" type="button" title="Perbesar bumi" aria-label="Perbesar bumi">+</button>
+  <span id="ezVal">1,0&times;</span>
+  <button id="ezOut" type="button" title="Perkecil bumi" aria-label="Perkecil bumi">&minus;</button>
+  <button id="ezReset" type="button" title="Kembalikan zoom (1x)" aria-label="Kembalikan zoom">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+  </button>
 </div>
 
-<!-- ============ V15-V16 · CSS & JS ============ -->
+<!-- ============ CSS & JS V15-V19 ============ -->
 <style id="v15css">
 /* ============================================================
    V15 · QUANTUM PARTIKEL (diperkuat) + ON/OFF METRIK + TIPOGRAFI
@@ -3601,8 +3596,6 @@ html:fullscreen, html:-webkit-full-screen{overscroll-behavior:none}
 @media (max-width:380px){.qxBtn{width:30px;height:30px}.qxBtn svg{width:14px;height:14px}}
 
 /* ---------- tombol Quantum di dock ---------- */
-#dkQuantum .qState{width:7px;height:7px;border-radius:50%;background:#5b7391;margin-left:2px;flex:0 0 auto;transition:.3s}
-#dkQuantum.on .qState{background:var(--lime);box-shadow:0 0 9px var(--lime)}
 
 /* ---------- tombol on/off METRIK di Cyber Guard HUD ---------- */
 .gMet{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:11px;cursor:pointer;
@@ -3773,65 +3766,96 @@ body.galOpen #galOv{display:block;animation:galFade .28s ease both}
 .glCap{position:absolute;left:0;right:0;bottom:clamp(10px,2.4vw,24px);text-align:center;font-size:12px;
   letter-spacing:.06em;color:#b9d3ee}
 @media (max-width:520px){.glNav{width:40px;height:40px;font-size:20px}#galLight img{max-height:70vh}}
-
-/* ---------------- PANEL METRIK LIVE ---------------- */
-#metrik{position:fixed;right:clamp(12px,3vw,26px);bottom:calc(clamp(16px,3.4vw,28px) + 80px);z-index:205;
-  width:min(262px,74vw);border-radius:18px;overflow:hidden;
-  border:1px solid rgba(120,190,255,.2);
-  background:linear-gradient(165deg,rgba(10,19,34,.92),rgba(5,10,20,.96));
-  -webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%);
-  box-shadow:0 28px 74px -42px #000,0 1px 0 rgba(255,255,255,.06) inset;
-  transition:opacity .3s,transform .3s,width .3s,border-color .3s}
-#metrik.hide{opacity:0;transform:translateY(10px);pointer-events:none}
-.metHead{display:flex;align-items:center;gap:8px;padding:10px 11px;
-  background:linear-gradient(160deg,rgba(56,232,255,.1),rgba(139,92,246,.08));
-  border-bottom:1px solid rgba(120,190,255,.14)}
-.metDot{width:7px;height:7px;border-radius:50%;flex:0 0 auto;background:var(--lime);
-  box-shadow:0 0 9px var(--lime);animation:metPulse 2.2s ease-in-out infinite}
-@keyframes metPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.82)}}
-.metHead b{flex:1 1 auto;font-family:var(--display);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#cfe9ff}
-.metBtn{cursor:pointer;border-radius:8px;padding:4px 8px;font-size:9px;font-weight:700;letter-spacing:.12em;
-  border:1px solid rgba(56,232,255,.5);color:#eafcff;background:rgba(56,232,255,.16);transition:.2s}
-.metBtn:hover{background:rgba(56,232,255,.3)}
-.metMin{cursor:pointer;width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-size:13px;
-  border:1px solid rgba(120,190,255,.24);background:rgba(8,15,28,.8);color:#b9d3ee;transition:.2s;line-height:1}
-.metMin:hover{border-color:rgba(56,232,255,.6);color:#eafcff}
-.metBody{padding:10px 11px 11px}
-#metSpark{display:block;width:100%;height:46px;border-radius:9px;
-  background:linear-gradient(180deg,rgba(56,232,255,.07),transparent);border:1px solid rgba(120,190,255,.12)}
-.metGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:9px}
-.metCell{padding:6px 7px;border-radius:9px;border:1px solid rgba(120,190,255,.12);background:rgba(7,14,26,.66);min-width:0}
-.metCell b{display:block;font-family:var(--display);font-size:13px;line-height:1.1;color:#eaf7ff;
-  font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.metCell span{display:block;font-size:7.5px;letter-spacing:.14em;text-transform:uppercase;color:#7c93b4;margin-top:2px}
-.metCell.c b{color:#9fe9ff}.metCell.l b{color:#9dfbc7}.metCell.g b{color:#ffd894}
-.metBar{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:8.5px;letter-spacing:.12em;
-  text-transform:uppercase;color:#7c93b4}
-.metBar>span{flex:0 0 74px}
-.metBar>i{flex:1 1 auto;height:5px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
-.metBar>i>b{display:block;height:100%;width:0;border-radius:999px;
-  background:linear-gradient(90deg,var(--cyan),var(--violet));transition:width .45s cubic-bezier(.22,1,.36,1)}
-.metBar.int>i>b{background:linear-gradient(90deg,var(--lime),var(--cyan))}
-#metrik.min .metBody{display:none}
-#metrik.off{border-color:rgba(120,190,255,.12)}
-#metrik.off .metBody{opacity:.45;filter:grayscale(.5)}
-#metrik.off .metDot{background:#5b7391;box-shadow:none;animation:none}
-#metrik.off .metBtn{border-color:rgba(255,93,143,.5);color:#ffd7e2;background:rgba(255,93,143,.16)}
-#metrik.off #metSpark{background:none}
-@media (max-width:600px){
-  #metrik{width:min(224px,calc(100vw - 178px));bottom:calc(clamp(16px,3.4vw,28px) + 96px);border-radius:15px}
-  .metHead{padding:8px 9px;gap:6px}
-  .metHead b{font-size:9px;letter-spacing:.14em}
-  .metCell b{font-size:12px}
-  .metBar>span{flex:0 0 64px}
-}
-@media (max-width:380px){
-  #metrik{width:min(214px,84vw)}
-  .metGrid{grid-template-columns:repeat(2,1fr)}
-}
 body.galOpen{overflow:hidden}
-#dkMetrik .qState{width:7px;height:7px;border-radius:50%;background:#5b7391;margin-left:2px;flex:0 0 auto;transition:.3s}
-#dkMetrik.on .qState{background:var(--lime);box-shadow:0 0 9px var(--lime)}
+
+</style>
+<style id="v19css">
+/* ============================================================
+   V19 · KONTROL ZOOM BUMI 3D + PENYEMPURNAAN DASBOR
+   ============================================================ */
+
+/* ---------------- kontrol zoom bumi ---------------- */
+#earthZoom{position:fixed;right:clamp(8px,2vw,20px);top:50%;transform:translateY(-50%);z-index:150;
+  display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 6px;border-radius:14px;
+  border:1px solid rgba(120,190,255,.22);
+  background:linear-gradient(160deg,rgba(10,18,32,.86),rgba(5,10,20,.92));
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  box-shadow:0 22px 50px -34px #000,0 1px 0 rgba(255,255,255,.06) inset}
+#earthZoom button{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;cursor:pointer;
+  border:1px solid rgba(140,180,235,.24);background:rgba(9,16,30,.9);color:#cfe6ff;
+  font-size:17px;line-height:1;transition:.22s}
+#earthZoom button:hover{border-color:rgba(56,232,255,.7);color:#fff;background:rgba(56,232,255,.16);transform:translateY(-1px)}
+#earthZoom button:active{transform:scale(.94)}
+#earthZoom button svg{width:15px;height:15px}
+#ezVal{font-family:var(--display);font-size:9.5px;letter-spacing:.04em;color:#9fe9ff;
+  font-variant-numeric:tabular-nums;padding:1px 0}
+#earthZoom::before{content:"BUMI";font-family:var(--display);font-size:7.5px;letter-spacing:.18em;color:#6d86a6;margin-bottom:1px}
+@media (max-width:600px){
+  #earthZoom{padding:6px 4px;gap:5px;border-radius:12px;right:6px}
+  #earthZoom button{width:30px;height:30px;border-radius:9px;font-size:15px}
+  #ezVal{font-size:9px}
+  #earthZoom::before{display:none}
+}
+@media (max-height:520px){#earthZoom{top:auto;bottom:96px;transform:none}}
+
+/* ---------------- dasbor: hero & statistik ---------------- */
+h1.heroName{letter-spacing:-1.6px;text-shadow:0 30px 80px rgba(4,10,20,.6)}
+.heroRole{margin-bottom:14px}
+.heroBio{max-width:640px;color:#b9cbe4;text-shadow:0 1px 16px rgba(4,8,16,.55)}
+.heroActions{margin-top:24px;gap:12px}
+.btnP,.btnG{min-height:46px}
+.btnP{box-shadow:0 20px 44px -22px rgba(56,232,255,.95),inset 0 1px 0 rgba(255,255,255,.35)}
+.btnG{background:rgba(9,16,30,.66);border-color:rgba(150,190,235,.24)}
+.btnG:hover{background:rgba(13,23,42,.88);border-color:rgba(56,232,255,.5)}
+.pill{border-color:rgba(56,232,255,.3);background:rgba(7,14,26,.72)}
+
+.stats{gap:11px;margin-top:30px}
+.stat{position:relative;overflow:hidden;padding:15px 14px;border-radius:16px;
+  border-color:rgba(140,180,235,.16);
+  background:linear-gradient(160deg,rgba(13,22,40,.7),rgba(7,13,24,.62))}
+.stat::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(56,232,255,.6),transparent);opacity:.75}
+.stat b{letter-spacing:-.6px}
+.stat span{color:#8fa6c4}
+.stat:hover{border-color:rgba(56,232,255,.42);box-shadow:0 20px 42px -30px rgba(56,232,255,.6)}
+
+/* ---------------- tab & panel ---------------- */
+.tabsWrap{padding:9px 0 11px}
+.tab{background:rgba(8,14,26,.74);border-color:rgba(140,180,235,.18)}
+.tab:hover{background:rgba(14,24,44,.88)}
+.tab.on{box-shadow:0 16px 38px -20px rgba(56,232,255,.85),inset 0 1px 0 rgba(255,255,255,.5)}
+
+.secHead{margin:2px 0 20px}
+.secHead h2{letter-spacing:-.8px}
+.secHead p{color:#8ba3c0}
+
+.card{border-radius:20px;border-color:rgba(140,180,235,.15);padding:22px;
+  background:linear-gradient(165deg,rgba(13,22,40,.74),rgba(6,11,22,.68));
+  box-shadow:0 26px 70px -52px rgba(0,0,0,1)}
+.card::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.04),transparent 44%)}
+.card:hover{border-color:rgba(56,232,255,.32);
+  box-shadow:0 34px 80px -46px rgba(0,0,0,1),0 0 0 1px rgba(56,232,255,.08)}
+.card h3{font-size:16px;letter-spacing:-.2px;margin-bottom:9px}
+.card h3 .ic{border-radius:9px}
+.card p{font-size:13.8px;line-height:1.8;color:#a9c0dc}
+.card .tag{border-radius:9px}
+
+.appCard{border-radius:15px}
+.appCard h4{letter-spacing:-.1px}
+.appCard:hover{box-shadow:0 26px 50px -30px rgba(56,232,255,.5)}
+
+/* ---------------- aksesibilitas & detail kecil ---------------- */
+:where(button,a,input,select,textarea,[tabindex]):focus-visible{outline:2px solid rgba(56,232,255,.75);
+  outline-offset:2px;border-radius:10px}
+footer{border-top-color:rgba(140,175,230,.14)}
+
+@media (max-width:600px){
+  .card{padding:17px 15px;border-radius:17px}
+  .stat{padding:13px 11px}
+  .heroBio{max-width:100%}
+  .btnP,.btnG{min-height:44px}
+}
 
 </style>
 <script id="v15js">
@@ -4492,178 +4516,83 @@ body.galOpen{overflow:hidden}
   else wire();
 })();
 
+</script>
+<script id="v19js">
+
 /* ============================================================
-   V16 · PANEL METRIK LIVE + ON/OFF (tersambung ke Metrik HUD)
+   V19 · ZOOM BUMI 3D (latar dasbor)
+   Tombol −/+ , putar roda di area kosong, dan cubit 2 jari.
+   Zoom disimpan di localStorage 'ph_earth_zoom'.
    ============================================================ */
 (function(){
   'use strict';
-  var q = function(id){ return document.getElementById(id); };
-  var panel, spark, sctx, btn, minBtn, dot;
-  var on = true, min = false, raf = 0, t0 = Date.now();
-  var frames = 0, fpsT = performance.now(), fps = 60, load = 0, peak = 0;
-  var hist = [], histMax = 46, entropy = 0.972, latency = 18, memSim = 42;
-  var UIT = 0;
+  var KEY = 'ph_earth_zoom';
+  var MIN = 0.62, MAX = 2.5, STEP = 1.14;
+  var zoom = 1, waiting = 0;
 
-  function readState(){
-    try { var s = localStorage.getItem('ph_metrik'); if (s !== null) on = s === '1'; } catch(e){}
-    var m = null;
-    try { m = localStorage.getItem('ph_met_min'); } catch(e){}
-    min = (m === '1');   /* bawaan: panel terbuka, bisa dikecilkan & tersimpan */
-    if (m === null){ try { localStorage.setItem('ph_met_min', min ? '1' : '0'); } catch(e){} }
+  try {
+    var s = localStorage.getItem(KEY);
+    if (s !== null && !isNaN(parseFloat(s))) zoom = Math.min(MAX, Math.max(MIN, parseFloat(s)));
+  } catch(e){}
+
+  function engine(){ return (window.mxEarth && typeof window.mxEarth.setZoom === 'function') ? window.mxEarth : null; }
+
+  function label(){
+    var v = document.getElementById('ezVal');
+    if (v) v.textContent = zoom.toFixed(1).replace('.', ',') + '\u00D7';
   }
-  function setText(el, v){ if (el && el.textContent !== String(v)) el.textContent = v; }
-
-  function drawSpark(){
-    if (!sctx) return;
-    var w = spark.width, h = spark.height;
-    sctx.clearRect(0, 0, w, h);
-    if (!hist.length) return;
-    var g = sctx.createLinearGradient(0, 0, w, 0);
-    g.addColorStop(0, 'rgba(56,232,255,.95)');
-    g.addColorStop(0.6, 'rgba(139,92,246,.9)');
-    g.addColorStop(1, 'rgba(124,249,176,.9)');
-    var stepX = w / Math.max(1, histMax - 1);
-    sctx.beginPath();
-    sctx.moveTo(0, h);
-    for (var i = 0; i < hist.length; i++){
-      var x = i * stepX, y = h - (hist[i] / 100) * (h - 6) - 3;
-      sctx.lineTo(x, y);
-    }
-    sctx.lineTo((hist.length - 1) * stepX, h);
-    sctx.closePath();
-    var ag = sctx.createLinearGradient(0, 0, 0, h);
-    ag.addColorStop(0, 'rgba(56,232,255,.28)');
-    ag.addColorStop(1, 'rgba(56,232,255,0)');
-    sctx.fillStyle = ag;
-    sctx.fill();
-    sctx.beginPath();
-    for (var j = 0; j < hist.length; j++){
-      var y2 = h - (hist[j] / 100) * (h - 6) - 3;
-      if (j === 0) sctx.moveTo(0, y2); else sctx.lineTo(j * stepX, y2);
-    }
-    sctx.strokeStyle = g;
-    sctx.lineWidth = 1.6;
-    sctx.lineJoin = 'round';
-    sctx.stroke();
-    var lx = (hist.length - 1) * stepX, ly = h - (hist[hist.length - 1] / 100) * (h - 6) - 3;
-    sctx.beginPath();
-    sctx.arc(lx, ly, 2.4, 0, Math.PI * 2);
-    sctx.fillStyle = '#eafcff';
-    sctx.fill();
+  function apply(){
+    var e = engine();
+    if (e){ try { e.setZoom(zoom); } catch(x){} }
+    label();
+    try { localStorage.setItem(KEY, zoom.toFixed(3)); } catch(x){}
   }
-
-  function tickUI(){
-    var up = Math.floor((Date.now() - t0) / 1000);
-    var mm = String(Math.floor(up / 60)).padStart(2, '0'), ss = String(up % 60).padStart(2, '0');
-    var parts = (window.qxGet && window.qxGet().particles) || 0;
-    var mem = memSim;
-    if (performance && performance.memory && performance.memory.usedJSHeapSize){
-      mem = Math.round(performance.memory.usedJSHeapSize / 1048576);
-    } else {
-      memSim = Math.max(28, Math.min(96, memSim + (Math.random() - 0.45) * 1.6));
-    }
-    entropy = Math.max(0.92, Math.min(0.9995, entropy + (Math.random() - 0.5) * 0.004));
-    latency = Math.max(9, Math.min(48, latency + (Math.random() - 0.5) * 4.2));
-    setText(q('mtFps'), Math.round(fps));
-    setText(q('mtPar'), parts);
-    setText(q('mtMem'), (mem > 0 ? mem + 'M' : '--'));
-    setText(q('mtLat'), latency.toFixed(0) + 'ms');
-    setText(q('mtEnt'), entropy.toFixed(3));
-    setText(q('mtUp'), mm + ':' + ss);
-    var lb = q('mtLoad'), ib = q('mtInt');
-    if (lb) lb.style.width = Math.round(Math.min(100, load)) + '%';
-    if (ib) ib.style.width = '100%';
+  function setZoom(z){
+    zoom = Math.min(MAX, Math.max(MIN, z));
+    apply();
   }
+  function by(f){ setZoom(zoom * f); }
 
-  function loop(ts){
-    raf = requestAnimationFrame(loop);
-    frames++;
-    if (ts - fpsT >= 500){
-      fps = Math.min(120, Math.round(frames * 1000 / (ts - fpsT)));
-      frames = 0; fpsT = ts;
-      load = Math.min(100, (fps / 60) * 100);
-      peak = Math.max(peak * 0.9, load);
-      hist.push(Math.round(load));
-      if (hist.length > histMax) hist.shift();
-      drawSpark();
-      if (ts - UIT > 480){ UIT = ts; tickUI(); }
-    }
-  }
-
-  function start(){
-    if (raf) return;
-    fpsT = performance.now(); frames = 0;
-    raf = requestAnimationFrame(loop);
-  }
-  function stop(){ if (raf){ cancelAnimationFrame(raf); raf = 0; } }
-
-  function paint(){
-    if (!panel) return;
-    panel.classList.toggle('off', !on);
-    panel.classList.toggle('min', min);
-    if (btn){
-      btn.textContent = on ? 'ON' : 'OFF';
-      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-      btn.title = on ? 'Metrik live: AKTIF · klik untuk mematikan' : 'Metrik live: NONAKTIF · klik untuk mengaktifkan';
-    }
-    if (minBtn) minBtn.textContent = min ? '+' : '–';
-    var dk = document.getElementById('dkMetrik');
-    if (dk){
-      dk.classList.toggle('on', on);
-      var lbl = dk.querySelector('.lbl');
-      if (lbl) lbl.textContent = on ? 'Metrik ON' : 'Metrik OFF';
-      dk.setAttribute('aria-pressed', on ? 'true' : 'false');
-    }
-    if (on){ start(); } else { stop(); }
-  }
-
-  function apply(v){
-    on = !!v;
-    try { localStorage.setItem('ph_metrik', on ? '1' : '0'); } catch(e){}
-    paint();
+  /* tunggu mesin bumi siap */
+  function waitEngine(){
+    if (engine()) { apply(); return; }
+    if ((waiting += 1) > 60) return;
+    setTimeout(waitEngine, 350);
   }
 
   function wire(){
-    panel = q('metrik'); spark = q('metSpark'); btn = q('metBtn'); minBtn = q('metMin');
-    if (!panel || !spark) return;
-    sctx = spark.getContext('2d');
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    spark.width = Math.round(240 * dpr);
-    spark.height = Math.round(46 * dpr);
-    if (sctx) sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    spark.style.height = '46px';
-
-    readState();
-
-    if (btn) btn.addEventListener('click', function(e){
-      e.preventDefault(); e.stopPropagation();
-      if (typeof window.metrikSet === 'function') window.metrikSet(!on); else apply(!on);
+    var box = document.getElementById('earthZoom');
+    if (!box) return;
+    box.title = 'Zoom bumi 3D: tombol + / \u2212, Ctrl + scroll, klik dua kali untuk reset';
+    box.addEventListener('click', function(e){
+      if (e.target.closest('#ezIn')) by(STEP);
+      else if (e.target.closest('#ezOut')) by(1 / STEP);
+      else if (e.target.closest('#ezReset')) setZoom(1);
     });
-    if (minBtn) minBtn.addEventListener('click', function(e){
-      e.preventDefault(); e.stopPropagation();
-      min = !min;
-      try { localStorage.setItem('ph_met_min', min ? '1' : '0'); } catch(e){}
-      paint();
-    });
-    var dk = document.getElementById('dkMetrik');
-    if (dk) dk.addEventListener('click', function(e){
+
+    /* roda mouse: Ctrl/⌘ + scroll (seperti peta), atau scroll di area latar kosong */
+    window.addEventListener('wheel', function(e){
+      var t = e.target;
+      var onBg = (t === document.body || t === document.documentElement ||
+                  (t.closest && t.closest('#earthZoom')));
+      if (!onBg && !(e.ctrlKey || e.metaKey)) return;   /* tanpa Ctrl, halaman tetap bisa digulir */
+      var inPanel = t.closest && t.closest('#galOv, #chatWrap, #ss, #guardOv');
+      if (inPanel) return;
       e.preventDefault();
-      if (typeof window.metrikSet === 'function') window.metrikSet(!on); else apply(!on);
+      by(e.deltaY < 0 ? STEP : 1 / STEP);
+    }, { passive: false });
+
+    /* klik dua kali pada latar = kembalikan zoom */
+    window.addEventListener('dblclick', function(e){
+      var t = e.target;
+      if (t === document.body || t === document.documentElement) setZoom(1);
     });
 
-    /* sambungkan dengan tombol Metrik di Cyber Guard HUD (satu status) */
-    var base = window.metrikSet;
-    window.metrikSet = function(v, quiet){
-      if (typeof base === 'function') base(v, quiet);
-      apply(v);
-    };
+    label();
+    waitEngine();
 
-    document.addEventListener('visibilitychange', function(){
-      if (document.hidden) stop(); else if (on) start();
-    });
-
-    paint();
-    tickUI();
+    window.earthZoomSet = setZoom;
+    window.earthZoomGet = function(){ return zoom; };
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire);
