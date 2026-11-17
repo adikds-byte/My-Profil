@@ -3533,10 +3533,10 @@ html:fullscreen, html:-webkit-full-screen{overscroll-behavior:none}
 
 <!-- ============ V16-V19 · GALERI FOTO ============ -->
 <div id="galOv" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Galeri foto">
+  <button class="galX" id="galClose" type="button" aria-label="Tutup galeri" title="Tutup galeri (Esc)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
   <div class="galWrap">
     <div class="galHead">
       <div class="ghT"><b>Galeri Foto</b><span>Koleksi pribadi &middot; <b id="galN">31</b> foto</span></div>
-      <button class="galX" id="galClose" aria-label="Tutup galeri">&#10005;</button>
     </div>
     <div class="galGrid" id="galGrid"></div>
     <div class="galFoot">Ketuk foto untuk memperbesar &middot; panah kiri/kanan untuk berpindah &middot; Esc menutup</div>
@@ -3725,7 +3725,11 @@ html,body{overflow-x:clip}
   overscroll-behavior:contain;
   background:radial-gradient(120% 100% at 50% 0,rgba(6,12,24,.88),rgba(3,5,12,.95));
   -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
-body.galOpen #galOv{display:block;animation:galFade .28s ease both}
+#galOv.on{display:block;animation:galFade .3s ease both}
+#galOv.closing{animation:galFadeOut .26s ease both;pointer-events:none}
+#galOv.closing .galWrap{animation:galOut .24s cubic-bezier(.4,0,1,1) both}
+@keyframes galFadeOut{from{opacity:1}to{opacity:0}}
+@keyframes galOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(10px) scale(.975)}}
 @keyframes galFade{from{opacity:0}to{opacity:1}}
 .galWrap{max-width:1060px;margin:0 auto;border-radius:22px;border:1px solid rgba(120,190,255,.18);
   background:linear-gradient(160deg,rgba(12,22,40,.92),rgba(5,10,20,.97));
@@ -3737,7 +3741,20 @@ body.galOpen #galOv{display:block;animation:galFade .28s ease both}
 .galHead b{display:block;font-family:var(--display);font-size:clamp(15px,2.4vw,19px);letter-spacing:-.2px;color:#eaf7ff}
 .galHead span{display:block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#7c93b4;margin-top:3px}
 .galHead span b{display:inline;font-size:11px;color:#9fe9ff;letter-spacing:.1em}
-.galX{flex:0 0 auto;width:36px;height:36px;border-radius:11px;cursor:pointer;display:grid;place-items:center;
+.galX{position:fixed;top:clamp(10px,2.4vw,22px);right:clamp(10px,2.4vw,22px);z-index:4;
+  width:46px;height:46px;border-radius:15px;cursor:pointer;display:grid;place-items:center;padding:0;
+  border:1px solid rgba(120,190,255,.32);color:#dff4ff;
+  background:linear-gradient(150deg,rgba(16,27,46,.95),rgba(6,12,24,.97));
+  box-shadow:0 20px 44px -24px #000,inset 0 1px 0 rgba(255,255,255,.08);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  transition:transform .22s cubic-bezier(.22,1,.36,1),border-color .2s,color .2s,background .2s}
+.galX svg{width:19px;height:19px}
+.galX:hover{transform:rotate(90deg) scale(1.06);border-color:rgba(255,93,143,.7);color:#fff;
+  background:linear-gradient(150deg,rgba(255,93,143,.28),rgba(139,92,246,.26))}
+.galX:active{transform:scale(.93)}
+@media (max-width:520px){.galX{width:42px;height:42px;border-radius:13px;top:12px;right:12px}}
+/* tombol X lama (di kepala panel) tidak dipakai lagi */
+.galX.old{position:static;width:36px;height:36px;border-radius:11px}
   border:1px solid rgba(120,190,255,.26);background:rgba(9,16,30,.9);color:#b9d3ee;transition:.22s;font-size:15px}
 .galX:hover{border-color:rgba(255,93,143,.6);color:#ffd7e2;transform:rotate(90deg)}
 .galGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(134px,1fr));gap:10px}
@@ -3755,7 +3772,8 @@ body.galOpen #galOv{display:block;animation:galFade .28s ease both}
 
 #galLight{position:fixed;inset:0;z-index:1300;display:none;place-items:center;padding:clamp(10px,3vw,30px);
   background:rgba(2,4,10,.94);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
-#galLight.on{display:grid;animation:galFade .22s ease both}
+#galLight.on{display:grid;animation:galFade .24s ease both}
+#galLight.closing{animation:galFadeOut .2s ease both;pointer-events:none}
 #galLight img{max-width:min(92vw,900px);max-height:80vh;border-radius:16px;border:1px solid rgba(120,190,255,.24);
   box-shadow:0 40px 120px -50px #000;object-fit:contain;animation:galIn .3s cubic-bezier(.22,1,.36,1) both}
 .glNav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:14px;cursor:pointer;
@@ -3770,6 +3788,11 @@ body.galOpen #galOv{display:block;animation:galFade .28s ease both}
   letter-spacing:.06em;color:#b9d3ee}
 @media (max-width:520px){.glNav{width:40px;height:40px;font-size:20px}#galLight img{max-height:70vh}}
 body.galOpen{overflow:hidden}
+
+/* muncul bertahap saat galeri dibuka */
+.galItem{animation:galItemIn .42s cubic-bezier(.22,1,.36,1) both;animation-delay:calc(var(--d,0) * 12ms)}
+@keyframes galItemIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.galItem{animation:none}}
 
 </style>
 <style id="v19css">
@@ -3858,6 +3881,68 @@ footer{border-top-color:rgba(140,175,230,.14)}
   .stat{padding:13px 11px}
   .heroBio{max-width:100%}
   .btnP,.btnG{min-height:44px}
+}
+
+</style>
+<style id="v21css">
+/* ============================================================
+   V21 · WALKER DI INTERFACE GALERI + RAPI SMARTPHONE/TABLET
+   ============================================================ */
+
+/* ---- walker tetap tampil di atas latar galeri ---- */
+body.galOpen .walker{
+  z-index:1210;                 /* di atas latar galeri, di bawah panel foto */
+  opacity:.55;
+  height:min(46vh,430px);
+  right:clamp(0px,1vw,18px);
+  bottom:0;
+  pointer-events:none;
+  transition:opacity .45s ease,height .45s ease,transform .7s cubic-bezier(.22,1,.36,1);
+}
+body.galOpen .walker .tagCard,
+body.galOpen .walker .floorGlow{display:none}
+body.galOpen .walker video{mix-blend-mode:screen;opacity:.9}
+
+/* panel galeri digeser agar tidak tertutup walker (desktop lebar) */
+@media (min-width:1200px){
+  body.galOpen .galWrap{
+    max-width:min(1040px,calc(100vw - 340px));
+    margin-left:clamp(14px,3vw,50px);
+    margin-right:auto;
+  }
+}
+@media (min-width:901px) and (max-width:1199px){
+  body.galOpen .walker{height:min(34vh,300px);right:-2%;opacity:.42}
+  body.galOpen .galWrap{max-width:calc(100vw - 260px);margin-left:clamp(12px,2.4vw,26px);margin-right:auto}
+}
+
+/* tablet & ponsel: kecil di sudut, tidak menutupi teks */
+@media (max-width:900px){
+  body.galOpen .walker{height:min(18vh,140px);right:-6%;bottom:78px;opacity:.22}
+  body.galOpen .galWrap{max-width:none;margin:0 auto}
+  body.galOpen .galHead{padding-right:56px}     /* ruang untuk tombol X */
+}
+@media (max-width:520px){
+  body.galOpen .walker{height:104px;right:-12%;bottom:62px;opacity:.18}
+}
+
+/* saat foto diperbesar, walker meredup agar tidak mengganggu */
+body.galLightOpen .walker{opacity:.1}
+
+/* ---- teks & tombol galeri lebih rapi di layar kecil ---- */
+@media (max-width:900px){
+  .galHead{margin-bottom:11px}
+  .galHead b{font-size:clamp(16px,4.4vw,19px)}
+  .galHead span{font-size:10px}
+  .galFoot{font-size:10px;line-height:1.5;padding-right:2px}
+}
+@media (max-width:520px){
+  #galOv{padding:10px 10px 16px}
+  .galWrap{padding:13px 12px 14px;border-radius:18px}
+  .galGrid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:7px}
+  .galItem{border-radius:11px}
+  .galItem .cap{font-size:9.5px;padding:12px 6px 5px}
+  .galHead{padding-right:52px}
 }
 
 </style>
@@ -4484,7 +4569,7 @@ footer{border-top-color:rgba(140,175,230,.14)}
     if (!grid) return;
     var h = '';
     for (var i = 0; i < GAL.length; i++){
-      h += '<button class="galItem" type="button" data-i="' + i + '" aria-label="Buka foto: ' + GAL[i].n.replace(/"/g, '') + '">'
+      h += '<button class="galItem" type="button" data-i="' + i + '" style="--d:' + i + '" aria-label="Buka foto: ' + GAL[i].n.replace(/"/g, '') + '">'
          + '<img loading="lazy" alt="' + GAL[i].n.replace(/"/g, '') + '" src="' + GAL[i].s + '">'
          + '<span class="cap">' + GAL[i].n + '</span></button>';
     }
@@ -4499,26 +4584,55 @@ footer{border-top-color:rgba(140,175,230,.14)}
     img.alt = GAL[idx].n;
     if (cap) cap.textContent = (idx + 1) + ' / ' + GAL.length + ' · ' + GAL[idx].n;
   }
+  var galToken = 0;
+
   function openLight(i){
     show(i);
-    light.classList.add('on');
-    light.setAttribute('aria-hidden', 'false');
+    if (light){
+      light.classList.remove('closing');
+      light.classList.add('on');
+      light.setAttribute('aria-hidden', 'false');
+    }
+    document.body.classList.add('galLightOpen');
   }
-  function closeLight(){
-    light.classList.remove('on');
-    light.setAttribute('aria-hidden', 'true');
+  function closeLight(instant){
+    if (!light) return;
+    if (instant || !light.classList.contains('on')){
+      light.classList.remove('on', 'closing');
+      light.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('galLightOpen');
+      return;
+    }
+    light.classList.add('closing');
+    setTimeout(function(){
+      light.classList.remove('closing', 'on');
+      light.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('galLightOpen');
+    }, 210);
   }
   function openGal(){
     render();
+    galToken++;
+    if (ov){
+      ov.classList.remove('closing');
+      ov.classList.add('on');
+      ov.setAttribute('aria-hidden', 'false');
+    }
     document.body.classList.add('galOpen');
-    ov.setAttribute('aria-hidden', 'false');
     var dock = document.getElementById('dock');
     if (dock) dock.classList.remove('open');
   }
   function closeGal(){
-    closeLight();
+    if (!ov || ov.classList.contains('closing')) return;
+    closeLight(true);
+    var token = ++galToken;
+    ov.classList.add('closing');
     document.body.classList.remove('galOpen');
-    ov.setAttribute('aria-hidden', 'true');
+    setTimeout(function(){
+      if (token !== galToken) return;          /* dibuka lagi sebelum animasi selesai */
+      ov.classList.remove('closing', 'on');
+      ov.setAttribute('aria-hidden', 'true');
+    }, 270);
   }
 
   function wire(){
